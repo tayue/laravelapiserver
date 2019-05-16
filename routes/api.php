@@ -225,7 +225,7 @@ $api->version('v1', function ($api) {
     });
 
 
-    //League\Fractal\Resource\Collection：资源集合
+
 
     //$api->get('articles', 'App\Http\Api\Auth\ArticleController@show'); //使用 header Accept  application/vnd.myapp.v1+json   (Accept: application/API_STANDARDS_TREE.API_SUBTYPE.API_VERSION+json)
     $api->group(['middleware' => 'auth:api'], function ($api) {  //使用了Jwt-auth验证中间件来验证api优先级提前
@@ -241,6 +241,25 @@ $api->version('v2', function ($api) {
     });
     $api->get('task/{id}', 'App\Http\Api\Auth\TaskController@show');
     $api->get('articles', 'App\Http\Api\Auth\ArticleController@index');
+});
+
+
+//Dingo Api 认证
+$api->version('v3', function ($api) {
+    $api->get('articles', 'App\Http\Api\Auth\ArticleController@index');
+    $api->post('user/auth', function () {
+        $credentials = app('request')->only('email', 'password');
+        try {
+            if (! $token = \Tymon\JWTAuth\Facades\JWTAuth::attempt($credentials)) {
+                throw new \Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException('Invalid credentials');
+            }
+        } catch (\Tymon\JWTAuth\Exceptions\JWTException $e) {
+            throw new \Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException('Create token failed');
+        }
+
+        return compact('token');
+    });
+
 });
 
 
