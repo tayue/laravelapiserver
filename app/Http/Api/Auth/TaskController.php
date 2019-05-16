@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Api\Auth;
+use App\Http\Requests\ArticleFormRequest;
 use App\Models\Article;
 use App\Transformers\ArticleTransformer;
 use Illuminate\Http\Request;
@@ -33,7 +34,6 @@ class TaskController extends ApiController
         $current = $request->input('current',0);
         $previous = $request->input('previous',0);
         $limit = $request->input('limit') ? : 10;
-
         if ($current) {
             $tasks = Article::where('id', '>', $current)->take($limit)->get();
         } else {
@@ -64,9 +64,12 @@ class TaskController extends ApiController
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(ArticleFormRequest $request)
     {
-        //
+
+        // 表单验证成功，继续后续处理
+        return $this->response->errorUnauthorized();
+
     }
 
     /**

@@ -72,7 +72,7 @@ $api->version('v1', function ($api) {
     $api->get('task/{id}', 'App\Http\Api\Auth\TaskController@show');
 
     $api->get('tasks', 'App\Http\Api\Auth\TaskController@index');
-
+    $api->post('formvalidate', 'App\Http\Api\Auth\TaskController@store');
     $api->get('page', 'App\Http\Api\Auth\TaskController@page');
     //Dingo 格式转化器 Fractal使用
 
@@ -194,6 +194,34 @@ $api->version('v1', function ($api) {
 
         $fractal = new \League\Fractal\Manager();
         return $fractal->createData($resource)->toJson();
+    });
+
+    //dinggo 异常处理
+    $api->post('task/exception', function () {
+        $task = \App\Models\Article::find(2);
+
+
+            throw new \Symfony\Component\HttpKernel\Exception\ConflictHttpException('Task was updated prior to your request.');
+
+
+        // No error, we can continue to update the user as per usual.
+    });
+
+    $api->post('validate', function () {
+        $rules = [
+            'text' => ['required', 'string'],
+            'is_completed' => ['required', 'boolean']
+        ];
+
+        $payload = app('request')->only('text', 'is_completed');
+
+        $validator = app('validator')->make($payload, $rules);
+
+        if ($validator->fails()) {
+            throw new \Dingo\Api\Exception\StoreResourceFailedException('Could not create new task.', $validator->errors());
+        }
+
+        // Create user as per usual.
     });
 
 
