@@ -15,8 +15,12 @@
                     <li v-if="$auth.check()" class="pull-right">
                         <a href="#" @click.prevent="$auth.logout()">退出</a>
                     </li>
+                    <li>
+                        <router-link :to="{ name: 'clients' }">客户端</router-link>
+                    </li>
                 </ul>
             </nav>
+
         </div>
         <div class="panel-body">
             <router-view></router-view>

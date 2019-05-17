@@ -4,6 +4,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\Article;
 use App\Models\Comment;
+use Laravel\Passport\Passport;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -20,22 +22,24 @@ use App\Models\Comment;
 //});
 
 
-Route::group([
+//Route::group([
+//
+//    'prefix' => 'auth'
+//
+//], function ($router) {
+//
+//    Route::post('login', 'AuthController@login')->name('login');
+//    Route::post('logout', 'AuthController@logout');
+//    Route::get('refresh', 'AuthController@refresh');
+//    Route::post('me', 'AuthController@me');
+//    Route::post('register', 'AuthController@register');
+//    Route::get('user', 'AuthController@user');
+//
+//    Route::get('articles', 'ArticleController@index');
+//});
+Route::get('articles', 'ArticleController@index');
 
-    'prefix' => 'auth'
-
-], function ($router) {
-
-    Route::post('login', 'AuthController@login')->name('login');
-    Route::post('logout', 'AuthController@logout');
-    Route::get('refresh', 'AuthController@refresh');
-    Route::post('me', 'AuthController@me');
-    Route::post('register', 'AuthController@register');
-    Route::get('user', 'AuthController@user');
-
-    Route::get('articles', 'ArticleController@index');
-});
-
+Route::get('users', 'ArticleController@user');
 
 //Route::group(['middleware' => 'auth:api'], function() { //验证中间件auth:api
 //    Route::get('articles', 'ArticleController@index');
@@ -246,7 +250,9 @@ $api->version('v2', function ($api) {
 
 //Dingo Api 认证
 $api->version('v3', function ($api) {
+    $api->group(['middleware' => ['client.credentials']], function ($api) {   //密码模式
     $api->get('articles', 'App\Http\Api\Auth\ArticleController@index');
+    });
     $api->post('user/auth', function () {
         $credentials = app('request')->only('email', 'password');
         try {
@@ -260,6 +266,36 @@ $api->version('v3', function ($api) {
         return compact('token');
     });
 
+    $api->post('user/token', function () {
+        app('request')->validate([
+            'email' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        $http = new \GuzzleHttp\Client();
+        // 发送相关字段到后端应用获取授权令牌
+        $response = $http->post(route('passport.token'), [
+            'form_params' => [
+                'grant_type' => 'password',
+                'client_id' => env('CLIENT_ID'),
+                'client_secret' => env('CLIENT_SECRET'),
+                'username' => app('request')->input('email'),  // 这里传递的是邮箱
+                'password' => app('request')->input('password'), // 传递密码信息
+                'scope' => '*'
+            ],
+        ]);
+
+        return response()->json($response->getBody()->getContents());
+    });
+});
+
+
+// 为了方便测试，我们先忽略 CSRF 校验
+\Laravel\Passport\Passport::$ignoreCsrfToken = true;
+
+Route::middleware('auth:api')->get('/user', function (Request $request) {
+    $user = \Auth::guard('api')->user();
+    return response()->json($user);
 });
 
 

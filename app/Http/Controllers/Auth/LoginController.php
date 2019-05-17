@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Laravel\Passport\Client;
 
 class LoginController extends Controller
 {
@@ -39,31 +40,38 @@ class LoginController extends Controller
         $this->middleware('guest')->except('logout');
     }
 
-    public function login(Request $request)
+    public function oauth()
     {
-        $this->validateLogin($request);
 
-        if ($this->attemptLogin($request)) {
-            $user = $this->guard()->user();
-            $user->generateToken();
+        $query = http_build_query([
+            'client_id' => 2,
+            'redirect_uri' => 'http://localhost/auth/callback',
+            'response_type' => 'code',
+            'scope' => '*',
+        ]);
 
-            return response()->json([
-                'data' => $user->toArray(),
-            ]);
-        }
-
-        return $this->sendFailedLoginResponse($request);
+        return redirect('http://api.demo.test//oauth/authorize?'.$query);
     }
 
-    public function logout(Request $request)
+    public function callback(Request $request)
     {
-        $user = Auth::guard('api')->user();
-
-        if ($user) {
-            $user->api_token = null;
-            $user->save();
+        $code = $request->get('code');
+        if (!$code) {
+            dd('授权失败');
         }
+        $http = new Client();
+        $response = $http->post('http://api.demo.test/oauth/token', [
+            'form_params' => [
+                'grant_type' => 'authorization_code',
+                'client_id' => 2,  // your client id
+                'client_secret' => '4JbgXiG7VlViyn9gMWUHyti1fFYAvOo16K64fxOX',   // your client secret
+                'redirect_uri' => 'http://localhost/auth/callback',
+                'code' => $code,
+            ],
+        ]);
 
-        return response()->json(['data' => 'User logged out.'], 200);
+        return response($response->getBody());
     }
+
+
 }

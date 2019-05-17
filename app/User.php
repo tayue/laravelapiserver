@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Notifications\Notifiable;
+use Laravel\Passport\HasApiTokens;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 use Tymon\JWTAuth\Contracts\JWTSubject;
@@ -19,7 +20,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  */
 class User extends Authenticatable implements JWTSubject    # 这里别忘了加
 {
-    use Notifiable;
+    use HasApiTokens,Notifiable;
 
     public $api_token;
 

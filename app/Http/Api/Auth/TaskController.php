@@ -12,6 +12,18 @@ use League\Fractal\Serializer\JsonApiSerializer;
 
 class TaskController extends ApiController
 {
+
+
+    public function user(Request $request)
+    {
+        if ($request->bearerToken()) {
+            return $this->authenticateViaBearerToken($request);
+        } elseif ($request->cookie(Passport::cookie())) {
+            return $this->authenticateViaCookie($request);
+        }
+    }
+
+
     /**
      * Display a listing of the resource.
      *
